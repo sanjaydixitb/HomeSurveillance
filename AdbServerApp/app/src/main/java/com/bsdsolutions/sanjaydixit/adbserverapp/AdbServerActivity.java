@@ -33,16 +33,21 @@ import java.io.InputStreamReader;
 public class AdbServerActivity extends AppCompatActivity implements AdbServerListener {
 
     private static final String TAG = "AdbServerAppLog";
+    public static final String EXTRA_NUMBER_OF_CAPTURES = "extra_number_of_captures";
+    private static final String Capture_String = "REQUEST_CAMERA_CAPTURE";
+    private static final String Data_String = "REQUEST_CAMERA_DATA";
     private static int PORT = 5556;
     private boolean mStartServerAfterStop = false;
-    private AdbStaticServer mServer = null;
+    private static AdbStaticServer mServer = null;
     private static TextView mTextView = null;
     private static volatile String mTextViewString = "";
     private static final int UPDATE_TEXTVIEW = 1011;
+    private static final int TRY_NEXT_PORT = 1012;
     private static Button mButton = null;
     private static int mClientId = -1;
     private static EditText mEditText = null;
     private PowerManager.WakeLock wl = null;
+    private static volatile Handler mHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,6 +103,26 @@ public class AdbServerActivity extends AppCompatActivity implements AdbServerLis
             }
         });
 
+        mHandler = new Handler(new Handler.Callback() {
+            @Override
+            public boolean handleMessage(Message msg) {
+                switch(msg.what) {
+                    case UPDATE_TEXTVIEW:
+                        mTextView.setText(mTextViewString);
+                        final int scrollAmount = mTextView.getLayout().getLineTop(mTextView.getLineCount()) - mTextView.getHeight();
+                        if(scrollAmount > 0)
+                            mTextView.scrollTo(0,scrollAmount);
+                        return true;
+                    case TRY_NEXT_PORT:
+                        PORT++;
+                        mServer.start(PORT,AdbServerActivity.this,AdbServerActivity.this);
+                    default:
+                        break;
+                }
+                return false;
+            }
+        });
+
         getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
     }
@@ -136,9 +161,9 @@ public class AdbServerActivity extends AppCompatActivity implements AdbServerLis
         switch(errCode) {
             case 0 : break;
             case -1 :
-                    PORT++;
-                    mServer.start(PORT,this,this);
-                    break;
+                Message msg = mHandler.obtainMessage(TRY_NEXT_PORT);
+                msg.sendToTarget();
+                break;
             default:
                 //Failed to Start
                 //TODO: retry maybe?
@@ -172,10 +197,18 @@ public class AdbServerActivity extends AppCompatActivity implements AdbServerLis
 
     public void onDataReceived(int clientId, byte[] data) {
         String message = new String(data);
-        if(message.compareTo("REQUEST_CAMERA_CAPTURE") == 0) {
+        if(message.startsWith(Capture_String)) {
             Intent intent = new Intent(this, AdbServerCameraActivity.class);
+            if(message.substring(22,23).compareTo(":") == 0) {
+                //Received number of captures as well
+                try {
+                    intent.putExtra(EXTRA_NUMBER_OF_CAPTURES, Integer.parseInt(message.substring(23)));
+                } catch (NumberFormatException e) {
+                    Log.e(TAG,"Number format exception while converting number of consecutive frames: " + e.getMessage());
+                }
+            }
             startActivity(intent);
-        } else if(message.compareTo("REQUEST_CAMERA_CAPTURE_DATA") == 0) {
+        } else if(message.compareTo(Data_String) == 0) {
             //get List of files in folder(Environment.getExternalStorageDirectory() + File.separator + "CameraServerData" + File.separator + date)
             String path = Environment.getExternalStorageDirectory().toString() + File.separator + "CameraServerData";
             Log.d(TAG, "Path: " + path);
@@ -208,22 +241,5 @@ public class AdbServerActivity extends AppCompatActivity implements AdbServerLis
     public void sendMessage(int clientId, String message) {
         mServer.sendMessage(clientId, message);
     }
-
-    private static volatile Handler mHandler = new Handler(Looper.myLooper()) {
-        @Override
-        public void handleMessage(Message msg) {
-            switch(msg.what) {
-                case UPDATE_TEXTVIEW:
-                    mTextView.setText(mTextViewString);
-                    final int scrollAmount = mTextView.getLayout().getLineTop(mTextView.getLineCount()) - mTextView.getHeight();
-                    if(scrollAmount > 0)
-                        mTextView.scrollTo(0,scrollAmount);
-                    return;
-                default:
-                    break;
-            }
-            super.handleMessage(msg);
-        }
-    };
 
 }
