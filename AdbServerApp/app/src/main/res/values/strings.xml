@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">AdbServerApp</string>
+    <string name="Button_Send">Send</string>
+    <string name="Text_hint">Enter message</string>
+</resources>
