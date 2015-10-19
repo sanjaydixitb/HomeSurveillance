@@ -34,6 +34,10 @@ public class AdbServerCameraActivity extends Activity implements SurfaceHolder.C
     private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
     private Uri fileUri;
     private Camera myCamera = null;
+    private static final int DEFAULT_NUMBER_OF_CONSECUTIVE_CAPTURES = 1;
+    private static int NUMBER_OF_CONSECUTIVE_CAPTURES = DEFAULT_NUMBER_OF_CONSECUTIVE_CAPTURES;
+
+    private int captureCount = 0;
 
     TextView testView;
 
@@ -49,11 +53,14 @@ public class AdbServerCameraActivity extends Activity implements SurfaceHolder.C
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera_capture);
 
-        captureImageFromHardware();
+        Intent intent = getIntent();
+        NUMBER_OF_CONSECUTIVE_CAPTURES = intent.getIntExtra(AdbServerActivity.EXTRA_NUMBER_OF_CAPTURES,DEFAULT_NUMBER_OF_CONSECUTIVE_CAPTURES);
+
+        initializeCamera();
 
         start_camera();
         try {
-            Thread.sleep(1000,0);
+            Thread.sleep(500,0); //Removing this results in dark images. Fix!
         }
         catch (InterruptedException e ) {
             Log.e(TAG,"Exception : " + e.getMessage());
@@ -75,16 +82,7 @@ public class AdbServerCameraActivity extends Activity implements SurfaceHolder.C
         super.onBackPressed();
     }
 
-    public void captureImageFromHardware(){
-/*        if(myCamera == null) {
-            //TODO: access all available cameras
-            myCamera = Camera.open();
-            Camera.Parameters params = myCamera.getParameters();
-            myCamera.setParameters(params);
-//            myCamera.setDisplayOrientation();
-
-        }
-        CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);*/
+    public void initializeCamera(){
 
         surfaceView = (SurfaceView)findViewById(R.id.surfaceView);
         surfaceHolder = surfaceView.getHolder();
@@ -120,45 +118,15 @@ public class AdbServerCameraActivity extends Activity implements SurfaceHolder.C
                 } finally {
                 }
                 Log.d(TAG, "onPictureTaken - jpeg");
-                finish();
+                captureCount++;
+                if(captureCount < NUMBER_OF_CONSECUTIVE_CAPTURES) {
+                    captureImage();
+                } else {
+                    finish();
+                }
             }
         };
 
-    }
-
-    public void captureImageFromActivity(){
-        // create Intent to take a picture and return control to the calling application
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-
-        fileUri = getOutputMediaFileUri(); // create a file to save the image
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri); // set the image file name
-
-        // start the image capture Intent
-        startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
-    }
-
-
-    public Uri getOutputMediaFileUri() {
-        DateFormat df = new SimpleDateFormat("yyMMddHHmmssZ");
-        String date = df.format(Calendar.getInstance().getTime());
-        File file = new File(Environment.getExternalStorageDirectory() + File.separator + "CameraServerData" + File.separator + date);
-        return Uri.fromFile(file);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE) {
-            if (resultCode == RESULT_OK ) {
-                // Image captured and saved to fileUri specified in the Intent
-                Toast.makeText(this, "Image saved to:\n" +
-                        data.getData(), Toast.LENGTH_LONG).show();
-                Log.d(TAG,"Image saved to:\n" + data.getData());
-            } else if (resultCode == RESULT_CANCELED) {
-                // User cancelled the image capture
-            } else {
-                // Image capture failed, advise user
-            }
-        }
     }
 
     private void captureImage() {
@@ -168,6 +136,7 @@ public class AdbServerCameraActivity extends Activity implements SurfaceHolder.C
 
     private void start_camera()
     {
+        captureCount = 0;
         try{
             camera = Camera.open();
         }catch(RuntimeException e){
@@ -178,23 +147,17 @@ public class AdbServerCameraActivity extends Activity implements SurfaceHolder.C
         Camera.Parameters param;
         param = camera.getParameters();
         //modify parameter
-//        param.setPreviewSize(176, 144);
         param.setJpegQuality(100);
         param.setPictureSize(2592, 1944);
-        param.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
-        param.setSceneMode(Camera.Parameters.SCENE_MODE_STEADYPHOTO);
+        param.setSceneMode(Camera.Parameters.SCENE_MODE_AUTO);
         param.setWhiteBalance(Camera.Parameters.WHITE_BALANCE_AUTO);
         param.setAutoExposureLock(false);
         param.setAutoWhiteBalanceLock(false);
-        param.set("iso", "ISO800"); //Tried with 400, 800, 600 (values obtained from flatten())
         param.setColorEffect("none");
-//        param.setPreviewFrameRate(20);
-        param.set("scene-mode", "night-portrait");
         param.setFlashMode(Camera.Parameters.FLASH_MODE_AUTO);
-        param.setFocusMode("auto");
+        param.setFocusMode(Camera.Parameters.FOCUS_MODE_FIXED);
         param.setExposureCompensation(param.getMaxExposureCompensation());
         camera.setParameters(param);
-        setCameraDisplayOrientation(this,0,camera);
         try {
             camera.setPreviewDisplay(surfaceHolder);
             camera.startPreview();
@@ -203,30 +166,6 @@ public class AdbServerCameraActivity extends Activity implements SurfaceHolder.C
             Log.e(TAG, "init_camera: " + e);
             return;
         }
-    }
-
-    public static void setCameraDisplayOrientation(Activity activity, int cameraId, android.hardware.Camera camera) {
-        android.hardware.Camera.CameraInfo info =
-                new android.hardware.Camera.CameraInfo();
-        android.hardware.Camera.getCameraInfo(cameraId, info);
-        int rotation = activity.getWindowManager().getDefaultDisplay()
-                .getRotation();
-        int degrees = 0;
-        switch (rotation) {
-            case Surface.ROTATION_0: degrees = 0; break;
-            case Surface.ROTATION_90: degrees = 90; break;
-            case Surface.ROTATION_180: degrees = 180; break;
-            case Surface.ROTATION_270: degrees = 270; break;
-        }
-
-        int result;
-        if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-            result = (info.orientation + degrees) % 360;
-            result = (360 - result) % 360;  // compensate the mirror
-        } else {  // back-facing
-            result = (info.orientation - degrees + 360) % 360;
-        }
-        camera.setDisplayOrientation(result);
     }
 
     private void stop_camera()

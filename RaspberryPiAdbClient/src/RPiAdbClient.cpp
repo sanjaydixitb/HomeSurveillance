@@ -34,6 +34,7 @@ void RPiAdbClient::run(){
 	string writeBuf, readBuf;
 	char dataRead[1024];
 	int lenOfRead = 0;
+	int numberofCaptures = NUMBER_OF_CAPTURES;
 	switch(mMode) {
 	case MODE_NONE:
 		break;
@@ -48,9 +49,11 @@ void RPiAdbClient::run(){
 		break;
 	case MODE_CAMERA_CAPTURE:
 		writeBuf = "REQUEST_CAMERA_CAPTURE";
+		writeBuf.append(":");
+		writeBuf += numberofCaptures;
 		mSocket.socketWrite((char*)writeBuf.c_str(),writeBuf.length());
 		sleep(10);
-		writeBuf = "REQUEST_CAMERA_CAPTURE_DATA";
+		writeBuf = "REQUEST_CAMERA_DATA";
 		mSocket.socketWrite((char*)writeBuf.c_str(),writeBuf.length());
 		lenOfRead = mSocket.socketRead(dataRead,1024);
 		readBuf = "";
@@ -63,7 +66,10 @@ void RPiAdbClient::run(){
 		string command = "";
 		command.append(ADB).append("pull ").append(fileName).append(" .");
 		System_do(command);
-
+		//Remove file after pulling it. Save space!
+		command = "";
+		command.append(ADB).append("rm ").append(fileName);
+		System_do(command);
 		break;
 //	default:
 //		break;

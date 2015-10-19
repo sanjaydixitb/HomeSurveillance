@@ -15,3 +15,5 @@ using namespace std;
 #define BUF_SIZE 1024
 #define ADB "/Users/sanjaydixit/Library/Android/sdk/platform-tools/adb "
 #define System_do(x) system(x.insert(0,"echo ").c_str()); system(x.substr(5).c_str());
+
+#define NUMBER_OF_CAPTURES 2
