@@ -63,6 +63,7 @@ void RPiAdbClient::run(){
 		cout << "FileName : "<<fileName << " and size = " << readBuf.substr(readBuf.find("SizeInBytes:") + 12) <<endl;
 		int sizeOfFile = stoi(readBuf.substr(readBuf.find("SizeInBytes:") + 12));
 		cout << "FileName : "<<fileName << " and size = " << sizeOfFile <<endl;
+		//TODO: Pull entire folder and save in local folder. Clear remote folder
 		string command = "";
 		command.append(ADB).append("pull ").append(fileName).append(" .");
 		System_do(command);

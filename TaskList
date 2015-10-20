@@ -1,0 +1,13 @@
+#TODO:
+Pull entire folder and remove contents of entire folder.
+Save in local folder.
+Process images to check if storing them is required.
+Cleanup RaspberryPiAdbClient code:
+	- New thread for run
+	- Strategy Design Pattern for running Algorithms on Data
+Interface with External HDD.
+
+#Plan:
+	By:		Task:
+	22/10		Pull entire folder and remove contents of entire folder.
+	22/10		Save in local folder.
