@@ -10,6 +10,10 @@
 #ifndef AdbSocket_H_
 #define AdbSocket_H_
 
+namespace RPiAdbClientApp {
+
+namespace RPiAdbClientSocket {
+
 #define DEFAULT_IP "192.168.1.100"
 #define DEFAULT_PORT 5556
 
@@ -28,5 +32,9 @@ private:
 	char mWriteBuffer[BUF_SIZE];
 	bool socketConnect();
 };
+
+}
+
+}
 
 #endif /* AdbSocket_H_ */

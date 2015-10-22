@@ -7,11 +7,15 @@
 
 #include "../include/RPiAdbClient.h"
 
+namespace RPiAdbClientApp {
+
 RPiAdbClient::RPiAdbClient() {
+	mAlgorithm = NULL;
 	mMode = MODE_NONE;
 }
 
 RPiAdbClient::RPiAdbClient(char* ip, int port) : mSocket(ip,port) {
+	mAlgorithm = NULL;
 	mMode = MODE_NONE;
 }
 
@@ -48,6 +52,7 @@ void RPiAdbClient::run(){
 		cout << "Read " << readBuf << endl;
 		break;
 	case MODE_CAMERA_CAPTURE:
+		mAlgorithm = new RPiAdbClientImageAlgorithm();
 		writeBuf = "REQUEST_CAMERA_CAPTURE";
 		writeBuf.append(":");
 		writeBuf += numberofCaptures;
@@ -80,6 +85,8 @@ void RPiAdbClient::run(){
 void RPiAdbClient::setMode(int mode) {
 	mMode = (AppMode)mode;
 }
+
+}//RPiAdbClientApp
 
 int main() {
 	RPiAdbClient client;

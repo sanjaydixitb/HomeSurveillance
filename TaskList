@@ -6,6 +6,7 @@ Cleanup RaspberryPiAdbClient code:
 	- New thread for run
 	- Strategy Design Pattern for running Algorithms on Data
 Interface with External HDD.
+Detect if wifi is disconnected from Android App and reconnect (turn off and turn on)
 
 #Plan:
 	By:		Task:
