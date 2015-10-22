@@ -219,7 +219,8 @@ public class AdbServerActivity extends AppCompatActivity implements AdbServerLis
             {
                 Log.d(TAG, "FileName:" + file[i].getName());
             }
-            sendMessage(clientId,"FileName:"+file[file.length-1].getAbsolutePath()+",SizeInBytes:"+file[file.length-1].length());
+            sendMessage(clientId,"FolderName:"+path+",NumberOfFiles:"+file.length);
+//            sendMessage(clientId,"FileName:"+file[file.length-1].getAbsolutePath()+",SizeInBytes:"+file[file.length-1].length());
             return;
         }
         mTextViewString += "\nClient " + clientId + " : " + message;

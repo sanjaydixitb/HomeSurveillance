@@ -8,3 +8,5 @@
 RaspberryPiAdbClient/Debug/RaspberryPiAdbClient
 
 *.o
+
+RaspberryPiAdbClient/command_log

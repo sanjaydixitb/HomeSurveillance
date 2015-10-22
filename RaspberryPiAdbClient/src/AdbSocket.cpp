@@ -11,6 +11,7 @@ namespace RPiAdbClientApp {
 namespace RPiAdbClientSocket {
 
 AdbSocket::AdbSocket() {
+	mIsConnected = false;
 	mPort = -1;
 	mSocket = -1;
 	mIp = NULL;
@@ -21,7 +22,12 @@ AdbSocket::AdbSocket() {
 AdbSocket::AdbSocket(char* ip, int port) {
 	memset(mReadBuffer, 0, sizeof(mReadBuffer));
 	memset(mWriteBuffer, 0, sizeof(mWriteBuffer));
-	socketConnect(ip, port);
+	mIsConnected = false;
+	if(socketConnect(ip, port)) {
+		mIsConnected = true;
+	} else {
+		mIsConnected = false;
+	}
 }
 
 AdbSocket::~AdbSocket() {
@@ -29,7 +35,7 @@ AdbSocket::~AdbSocket() {
 	close(mSocket);
 }
 
-void AdbSocket::socketConnect(char* ip, int port) {
+bool AdbSocket::socketConnect(char* ip, int port) {
 	mPort = port;
 	mSocket = socket(AF_INET, SOCK_STREAM, 0);
 	if (!mIp)
@@ -37,9 +43,13 @@ void AdbSocket::socketConnect(char* ip, int port) {
 	mIp = strcpy(mIp, ip);
 	if (socketConnect()) {
 		cout << "Socket connected to " << ip << ":" << port << endl;
+		mIsConnected = true;
 	} else {
 		cout << "Socket failed to connect to " << ip << ":" << port << endl;
+		mIsConnected = false;
+		return false;
 	}
+	return true;
 }
 
 bool AdbSocket::socketConnect() {
@@ -97,6 +107,11 @@ int AdbSocket::socketRead(char* buff, int size) {
 	}
 	return retVal;
 }
+
+bool AdbSocket::isConnected() {
+	return mIsConnected;
+}
+
 }//RPiAdbClientApp
 }//RPiAdbClientSocket
 

@@ -1,14 +1,17 @@
 #TODO:
-Pull entire folder and remove contents of entire folder.
-Save in local folder.
+Write Server port to file and read from that file to connect to server at specific port.
 Process images to check if storing them is required.
 Cleanup RaspberryPiAdbClient code:
 	- New thread for run
 	- Strategy Design Pattern for running Algorithms on Data
 Interface with External HDD.
 Detect if wifi is disconnected from Android App and reconnect (turn off and turn on)
+Client should support asynchronous chat communication
 
 #Plan:
 	By:		Task:
 	22/10		Pull entire folder and remove contents of entire folder.
 	22/10		Save in local folder.
+
+#Future Work:
+Real Time data transfer from various sensors.

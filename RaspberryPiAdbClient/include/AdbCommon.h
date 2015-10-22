@@ -9,14 +9,22 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <string>
+#include <sstream>
 
 using namespace std;
 
 #define BUF_SIZE 1024
 #define ADB "/Users/sanjaydixit/Library/Android/sdk/platform-tools/adb "
 #define System_do(x) system(x.insert(0,"echo ").c_str()); system(x.substr(5).c_str());
+#define System_do_with_log(x) system(x.insert(0,"echo ").c_str()); system(x.insert(x.length()," > command_log").substr(5).c_str());
+#if __APPLE__ && __MACH__
+#define DESTINATION_FOLDER_PATH "./Images/"
+#else
+#define DESTINATION_FOLDER_PATH "./Images/"
+#endif
 
 #define NUMBER_OF_CAPTURES 2
+#define TIME_TO_WAIT_PER_CAPTURE 3
 
 //data types
 typedef unsigned char UINT8;

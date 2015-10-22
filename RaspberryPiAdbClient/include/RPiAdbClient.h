@@ -29,8 +29,8 @@ class RPiAdbClient {
 public:
 	RPiAdbClient();
 	RPiAdbClient(char* ip, int port);
-	void adbConnect(char* ip);
-	void clientConnect(char* ip, int port);
+	bool adbConnect(char* ip);
+	bool clientConnect(char* ip, int port);
 	virtual ~RPiAdbClient();
 	void run();
 	void setMode(int mode);
@@ -38,6 +38,8 @@ private:
 	AdbSocket mSocket;
 	AppMode mMode;
 	RPiAlgorithmBaseClass* mAlgorithm;
+	void runChat();
+	void runCamera();
 };
 
 }

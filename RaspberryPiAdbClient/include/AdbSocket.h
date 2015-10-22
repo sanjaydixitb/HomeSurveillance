@@ -21,15 +21,17 @@ class AdbSocket {
 public:
 	AdbSocket();
 	AdbSocket(char* ip, int port);
-	void socketConnect(char* ip, int port);
+	bool socketConnect(char* ip, int port);
 	virtual ~AdbSocket();
 	int socketWrite(char* buff, int size);
 	int socketRead(char* buff, int size);
+	bool isConnected();
 private:
 	int mSocket,mPort;
 	char* mIp;
 	char mReadBuffer[BUF_SIZE];
 	char mWriteBuffer[BUF_SIZE];
+	bool mIsConnected;
 	bool socketConnect();
 };
 
