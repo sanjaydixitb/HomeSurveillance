@@ -6,7 +6,6 @@ import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.os.Environment;
 import android.os.Handler;
-import android.os.Looper;
 import android.os.Message;
 import android.os.PowerManager;
 import android.support.v7.app.AppCompatActivity;
@@ -22,11 +21,9 @@ import android.widget.Toast;
 import com.bsdsolutions.sanjaydixit.adbserver.AdbServerListener;
 import com.bsdsolutions.sanjaydixit.adbserver.AdbStaticServer;
 
-import org.w3c.dom.Text;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 

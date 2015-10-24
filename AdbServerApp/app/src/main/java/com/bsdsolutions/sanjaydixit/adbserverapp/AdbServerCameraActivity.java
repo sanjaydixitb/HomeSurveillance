@@ -6,17 +6,13 @@ import android.hardware.Camera;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.MediaStore;
 import android.util.Log;
-import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.hardware.Camera.PictureCallback;
 import android.hardware.Camera.ShutterCallback;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -31,6 +27,7 @@ import java.text.DateFormat;
 public class AdbServerCameraActivity extends Activity implements SurfaceHolder.Callback {
 
     private static String TAG = "CameraServerLogs";
+    private static final String CAMERA_SERVER_DATA_PATH = "CameraServerData";
     private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
     private Uri fileUri;
     private Camera myCamera = null;
@@ -104,8 +101,17 @@ public class AdbServerCameraActivity extends Activity implements SurfaceHolder.C
             public void onPictureTaken(byte[] data, Camera camera) {
                 FileOutputStream outStream = null;
                 try {
+                    Calendar calendar = Calendar.getInstance();
+                    calendar.setTimeInMillis(System.currentTimeMillis());
+                    int mYear = calendar.get(Calendar.YEAR);
+                    int mMonth = calendar.get(Calendar.MONTH);
+                    int mDay = calendar.get(Calendar.DAY_OF_MONTH);
+                    int mHour = calendar.get(Calendar.HOUR_OF_DAY);
+                    int mMinute = calendar.get(Calendar.MINUTE);
+                    int mSecond = calendar.get(Calendar.SECOND);
+                    int mMilliSecond = calendar.get(Calendar.MILLISECOND);
                     outStream = new FileOutputStream(String.format(
-                            "/sdcard/CameraServerData/%d.jpg", System.currentTimeMillis()));
+                            Environment.getExternalStorageDirectory()+"/"+CAMERA_SERVER_DATA_PATH+"/%d%d%d%d%d%d%d.jpg",mYear,mMonth,mDay,mHour,mMinute,mSecond,mMilliSecond ));
                     outStream.write(data);
                     outStream.close();
                     Log.d(TAG, "onPictureTaken - wrote bytes: " + data.length);
