@@ -20,7 +20,7 @@ public class AdbServerAppUtils {
     public static final String CONFIG_SEPARATOR = ":";
     public static final String TAG = "AdbServerAppLog";
     private static String mFilePath = DEFAULT_CONFIGURATION_FILE_PATH;
-    private static HashMap<CONFIGURATION_PARAMETERS,String> mConfigMap;
+    private static HashMap<CONFIGURATION_PARAMETERS,String> mConfigMap = new HashMap<>();
 
     public enum CONFIGURATION_PARAMETERS{
         PORT,
@@ -43,12 +43,17 @@ public class AdbServerAppUtils {
 
         File file = new File(mFilePath);
         if(!file.exists()) {
-            Log.e(TAG,"Configuration file does not exist!");
-            return false;
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                Log.e(TAG,"File does not exist and failed to create it!");
+                return false;
+            }
+            Log.e(TAG,"Configuration file does not exist! Created it!");
         }
 
         try {
-            FileOutputStream f = new FileOutputStream(file);
+            FileOutputStream f = new FileOutputStream(file,false);
             PrintWriter pw = new PrintWriter(f);
             for( Entry<CONFIGURATION_PARAMETERS,String> values : mConfigMap.entrySet()) {
                 pw.println(values.getKey().name() + ":" + values.getValue());

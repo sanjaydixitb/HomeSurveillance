@@ -20,19 +20,22 @@ import android.widget.Toast;
 
 import com.bsdsolutions.sanjaydixit.adbserver.AdbServerListener;
 import com.bsdsolutions.sanjaydixit.adbserver.AdbStaticServer;
-
+import com.bsdsolutions.sanjaydixit.adbserverapp.AdbServerAppUtils.CONFIGURATION_PARAMETERS;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.HashMap;
 
 public class AdbServerActivity extends AppCompatActivity implements AdbServerListener {
 
     private static final String TAG = "AdbServerAppLog";
     public static final String EXTRA_NUMBER_OF_CAPTURES = "extra_number_of_captures";
-    private static final String Capture_String = "REQUEST_CAMERA_CAPTURE";
-    private static final String Data_String = "REQUEST_CAMERA_DATA";
+    public static final String CAMERA_SERVER_DATA_PATH = Environment.getExternalStorageDirectory().toString() + File.separator + "CameraServerData";
+    private static final String Capture_Request = "REQUEST_CAMERA_CAPTURE";
+    private static final String Data_Request = "REQUEST_CAMERA_DATA";
+    private static final String File_Names_Request = "REQUEST_CAMERA_DATA_FILE_NAMES";
     private static int PORT = 5556;
     private boolean mStartServerAfterStop = false;
     private static AdbStaticServer mServer = null;
@@ -66,6 +69,7 @@ public class AdbServerActivity extends AppCompatActivity implements AdbServerLis
             mServer.stop();
             mStartServerAfterStop = true;
         } else {
+            clearConfigFile();
             mServer.start(PORT, this, this);
         }
 
@@ -143,6 +147,14 @@ public class AdbServerActivity extends AppCompatActivity implements AdbServerLis
         super.onDestroy();
     }
 
+    private void clearConfigFile() {
+        HashMap<CONFIGURATION_PARAMETERS,String> map =  AdbServerAppUtils.getConfigMap();
+        map.clear();
+        map.put(CONFIGURATION_PARAMETERS.PORT,"");
+        map.put(CONFIGURATION_PARAMETERS.CAMERA_SERVER_DATA_PATH, "");
+        AdbServerAppUtils.writeConfigurationToFile();
+    }
+
     private void sendData() {
         AdbStaticServer server = AdbStaticServer.getInstance();
     }
@@ -156,7 +168,13 @@ public class AdbServerActivity extends AppCompatActivity implements AdbServerLis
         }
 */
         switch(errCode) {
-            case 0 : break;
+            case 0 :
+                HashMap<CONFIGURATION_PARAMETERS,String> map =  AdbServerAppUtils.getConfigMap();
+                map.clear();
+                map.put(CONFIGURATION_PARAMETERS.PORT, String.valueOf(PORT));
+                map.put(CONFIGURATION_PARAMETERS.CAMERA_SERVER_DATA_PATH, CAMERA_SERVER_DATA_PATH);
+                AdbServerAppUtils.writeConfigurationToFile();
+                break;
             case -1 :
                 Message msg = mHandler.obtainMessage(TRY_NEXT_PORT);
                 msg.sendToTarget();
@@ -194,20 +212,21 @@ public class AdbServerActivity extends AppCompatActivity implements AdbServerLis
 
     public void onDataReceived(int clientId, byte[] data) {
         String message = new String(data);
-        if(message.startsWith(Capture_String)) {
+        if(message.startsWith(Capture_Request)) {
             Intent intent = new Intent(this, AdbServerCameraActivity.class);
-            if(message.substring(22,23).compareTo(":") == 0) {
+            int req_len = Capture_Request.length();
+            if(message.length() > req_len && message.substring(req_len,req_len + 1).compareTo(":") == 0) {
                 //Received number of captures as well
                 try {
-                    intent.putExtra(EXTRA_NUMBER_OF_CAPTURES, Integer.parseInt(message.substring(23)));
+                    intent.putExtra(EXTRA_NUMBER_OF_CAPTURES, Integer.parseInt(message.substring(req_len + 1)));
                 } catch (NumberFormatException e) {
                     Log.e(TAG,"Number format exception while converting number of consecutive frames: " + e.getMessage());
                 }
             }
             startActivity(intent);
-        } else if(message.compareTo(Data_String) == 0) {
+        } else if(message.compareTo(Data_Request) == 0) {
             //get List of files in folder(Environment.getExternalStorageDirectory() + File.separator + "CameraServerData" + File.separator + date)
-            String path = Environment.getExternalStorageDirectory().toString() + File.separator + "CameraServerData";
+            String path = CAMERA_SERVER_DATA_PATH;
             Log.d(TAG, "Path: " + path);
             File f = new File(path);
             File file[] = f.listFiles();
@@ -217,6 +236,24 @@ public class AdbServerActivity extends AppCompatActivity implements AdbServerLis
                 Log.d(TAG, "FileName:" + file[i].getName());
             }
             sendMessage(clientId,"FolderName:"+path+",NumberOfFiles:"+file.length);
+//            sendMessage(clientId,"FileName:"+file[file.length-1].getAbsolutePath()+",SizeInBytes:"+file[file.length-1].length());
+            return;
+        } else if(message.compareTo(File_Names_Request) == 0) {
+            //get List of files in folder(Environment.getExternalStorageDirectory() + File.separator + "CameraServerData" + File.separator + date)
+            String path = CAMERA_SERVER_DATA_PATH;
+            String fileNames = "";
+            Log.d(TAG, "Path: " + path);
+            File f = new File(path);
+            File file[] = f.listFiles();
+            Log.d(TAG, "Size: " + file.length);
+            for (int i=0; i < file.length; i++)
+            {
+                Log.d(TAG, "FileName:" + file[i].getName());
+                if(i > 0)
+                    fileNames += ":";
+                fileNames += file[i].getAbsolutePath();
+            }
+            sendMessage(clientId,"NumberOfFiles:"+file.length+",FileNames:"+fileNames);
 //            sendMessage(clientId,"FileName:"+file[file.length-1].getAbsolutePath()+",SizeInBytes:"+file[file.length-1].length());
             return;
         }
