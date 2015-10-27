@@ -6,6 +6,7 @@
  */
 
 #include "AdbCommon.h"
+#include "RPiAdbClientUtils.h"
 #include "AdbSocket.h"
 #include "RPiAlgorithmBaseClass.h"
 #include "Algorithms/RPiAdbClientImageAlgorithm.h"
@@ -34,6 +35,7 @@ public:
 	virtual ~RPiAdbClient();
 	void run();
 	void setMode(int mode);
+	void getIPAndPort(char*ip, int port);
 private:
 	AdbSocket mSocket;
 	AppMode mMode;

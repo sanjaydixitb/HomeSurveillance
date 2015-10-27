@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
+import android.net.wifi.WifiManager;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
@@ -22,10 +23,7 @@ import com.bsdsolutions.sanjaydixit.adbserver.AdbServerListener;
 import com.bsdsolutions.sanjaydixit.adbserver.AdbStaticServer;
 import com.bsdsolutions.sanjaydixit.adbserverapp.AdbServerAppUtils.CONFIGURATION_PARAMETERS;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.HashMap;
 
 public class AdbServerActivity extends AppCompatActivity implements AdbServerListener {
@@ -60,6 +58,8 @@ public class AdbServerActivity extends AppCompatActivity implements AdbServerLis
         wl = pm.newWakeLock(
                 PowerManager.PARTIAL_WAKE_LOCK,
                 TAG);
+
+        checkWifiStatus();
 
         if(mServer == null) {
             mServer = AdbStaticServer.getInstance();
@@ -150,13 +150,17 @@ public class AdbServerActivity extends AppCompatActivity implements AdbServerLis
     private void clearConfigFile() {
         HashMap<CONFIGURATION_PARAMETERS,String> map =  AdbServerAppUtils.getConfigMap();
         map.clear();
-        map.put(CONFIGURATION_PARAMETERS.PORT,"");
+        map.put(CONFIGURATION_PARAMETERS.PORT, "");
         map.put(CONFIGURATION_PARAMETERS.CAMERA_SERVER_DATA_PATH, "");
         AdbServerAppUtils.writeConfigurationToFile();
     }
 
-    private void sendData() {
-        AdbStaticServer server = AdbStaticServer.getInstance();
+    private void checkWifiStatus(){
+        WifiManager wifi = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        if(wifi.getWifiState() != WifiManager.WIFI_STATE_ENABLED) {
+            wifi.setWifiEnabled(true); // true or false to activate/deactivate wifi
+            Log.d(TAG, "Wifi was disabled, so enabled it!");
+        }
     }
 
     public void onStarted(int errCode) {
@@ -188,6 +192,9 @@ public class AdbServerActivity extends AppCompatActivity implements AdbServerLis
     }
 
     public void onStopped(int errCode) {
+
+        clearConfigFile();
+
         if(mStartServerAfterStop) {
             Log.d(TAG,"Starting Server after Stopping!");
             mStartServerAfterStop = false;
@@ -225,6 +232,7 @@ public class AdbServerActivity extends AppCompatActivity implements AdbServerLis
             }
             startActivity(intent);
         } else if(message.compareTo(Data_Request) == 0) {
+            //TODO: Probably redundant. Move to Utils.
             //get List of files in folder(Environment.getExternalStorageDirectory() + File.separator + "CameraServerData" + File.separator + date)
             String path = CAMERA_SERVER_DATA_PATH;
             Log.d(TAG, "Path: " + path);
@@ -239,6 +247,7 @@ public class AdbServerActivity extends AppCompatActivity implements AdbServerLis
 //            sendMessage(clientId,"FileName:"+file[file.length-1].getAbsolutePath()+",SizeInBytes:"+file[file.length-1].length());
             return;
         } else if(message.compareTo(File_Names_Request) == 0) {
+            //TODO: Move to Utils.
             //get List of files in folder(Environment.getExternalStorageDirectory() + File.separator + "CameraServerData" + File.separator + date)
             String path = CAMERA_SERVER_DATA_PATH;
             String fileNames = "";
@@ -260,17 +269,6 @@ public class AdbServerActivity extends AppCompatActivity implements AdbServerLis
         mTextViewString += "\nClient " + clientId + " : " + message;
         Message msg = mHandler.obtainMessage(UPDATE_TEXTVIEW);
         msg.sendToTarget();
-    }
-
-    public static String convertStreamToString(InputStream is) throws Exception {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-        StringBuilder sb = new StringBuilder();
-        String line = null;
-        while ((line = reader.readLine()) != null) {
-            sb.append(line).append("\n");
-        }
-        reader.close();
-        return sb.toString();
     }
 
     public void sendMessage(int clientId, String message) {

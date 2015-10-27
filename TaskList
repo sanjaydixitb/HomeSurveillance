@@ -8,6 +8,8 @@ Cleanup RaspberryPiAdbClient code:
 Interface with External HDD.
 Detect if wifi is disconnected from Android App and reconnect (turn off and turn on)
 Client should support asynchronous chat communication
+Move all Defines to a common file.e
+
 
 #Future Work:
 Real Time data transfer from various sensors.

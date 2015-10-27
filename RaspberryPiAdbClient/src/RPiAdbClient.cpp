@@ -23,6 +23,13 @@ RPiAdbClient::~RPiAdbClient() {
 	// TODO Auto-generated destructor stub
 }
 
+void RPiAdbClient::getIPAndPort(char*ip, int port) {
+	string command = "";
+	//TODO: get file using adb and parse it to get ip and port (verifying if server has started)
+	//		else, start the server application by launching it.
+}
+
+
 bool RPiAdbClient::clientConnect(char* ip, int port) {
 	mSocket.socketConnect(ip,port);
 	return mSocket.isConnected();

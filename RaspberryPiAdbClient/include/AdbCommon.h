@@ -10,6 +10,12 @@
 #include <netdb.h>
 #include <string>
 #include <sstream>
+#include <unordered_map>
+
+typedef enum {
+	CAMERA_SERVER_DATA_PATH = 0,
+	PORT
+}CONFIG_KEYS ;
 
 using namespace std;
 
