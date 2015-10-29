@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
@@ -14,7 +16,8 @@
 
 typedef enum {
 	CAMERA_SERVER_DATA_PATH = 0,
-	PORT
+	PORT,
+	TOTAL_NUMBER_OF_CONFIG_KEYS
 }CONFIG_KEYS ;
 
 using namespace std;

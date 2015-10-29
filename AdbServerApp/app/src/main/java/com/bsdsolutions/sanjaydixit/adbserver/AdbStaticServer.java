@@ -35,6 +35,7 @@ public class AdbStaticServer {
     private static AdbStaticServer mInstance = new AdbStaticServer();
 
     public static AdbStaticServer getInstance( ) {
+        //TODO: create a new socket every time ?
         return mInstance;
     }
 
@@ -100,6 +101,10 @@ public class AdbStaticServer {
             mServerSocket.bind(address);
         } catch (IOException e) {
             Log.e(TAG, "Failed to bind to address : " + ip + ":" + port + " . Exception : " + e.getMessage());
+            if(e.getMessage().contains("closed")){
+                //Making it null so that it is created in next call
+                mServerSocket = null;
+            }
             mState = ServerState.ServerState_Stopped;
             mListener.onStarted(-1);
             return;

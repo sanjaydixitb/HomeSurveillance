@@ -23,7 +23,8 @@ namespace RPiAdbClientApp {
 typedef enum {
 	MODE_NONE = 0,
 	MODE_CHAT,
-	MODE_CAMERA_CAPTURE
+	MODE_CAMERA_CAPTURE,
+	MODE_CLOSE_SERVER_APP
 }AppMode;
 
 class RPiAdbClient {
@@ -34,6 +35,7 @@ public:
 	bool clientConnect(char* ip, int port);
 	virtual ~RPiAdbClient();
 	void run();
+	int getMode();
 	void setMode(int mode);
 	void getIPAndPort(char*ip, int port);
 private:
@@ -42,6 +44,7 @@ private:
 	RPiAlgorithmBaseClass* mAlgorithm;
 	void runChat();
 	void runCamera();
+	void closeServerApp();
 };
 
 }

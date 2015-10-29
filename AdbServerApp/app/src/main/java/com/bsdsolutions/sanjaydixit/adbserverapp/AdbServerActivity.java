@@ -34,6 +34,7 @@ public class AdbServerActivity extends AppCompatActivity implements AdbServerLis
     private static final String Capture_Request = "REQUEST_CAMERA_CAPTURE";
     private static final String Data_Request = "REQUEST_CAMERA_DATA";
     private static final String File_Names_Request = "REQUEST_CAMERA_DATA_FILE_NAMES";
+    private static final String Close_Server_App_Request = "CLOSE_SERVER_APP";
     private static int PORT = 5556;
     private boolean mStartServerAfterStop = false;
     private static AdbStaticServer mServer = null;
@@ -115,7 +116,17 @@ public class AdbServerActivity extends AppCompatActivity implements AdbServerLis
                             mTextView.scrollTo(0,scrollAmount);
                         return true;
                     case TRY_NEXT_PORT:
-                        PORT++;
+                        if(PORT == 65535) {
+                            PORT = 0;
+                        }
+                        else if(PORT == 5554) {
+                            Log.e(TAG,"Tried all ports, better luck next time, Bye!");
+                            PORT = 5556;
+                            finish();
+                            return true;
+                        } else {
+                            PORT++;
+                        }
                         mServer.start(PORT,AdbServerActivity.this,AdbServerActivity.this);
                     default:
                         break;
@@ -173,6 +184,7 @@ public class AdbServerActivity extends AppCompatActivity implements AdbServerLis
 */
         switch(errCode) {
             case 0 :
+                Log.d(TAG,"Server Started!");
                 HashMap<CONFIGURATION_PARAMETERS,String> map =  AdbServerAppUtils.getConfigMap();
                 map.clear();
                 map.put(CONFIGURATION_PARAMETERS.PORT, String.valueOf(PORT));
@@ -180,15 +192,16 @@ public class AdbServerActivity extends AppCompatActivity implements AdbServerLis
                 AdbServerAppUtils.writeConfigurationToFile();
                 break;
             case -1 :
+                Log.d(TAG,"Server failed to start, trying next port!");
                 Message msg = mHandler.obtainMessage(TRY_NEXT_PORT);
                 msg.sendToTarget();
                 break;
             default:
+                Log.d(TAG,"Server failed to start!");
                 //Failed to Start
                 //TODO: retry maybe?
                 finish();
         }
-        Log.d(TAG,"Server Started!");
     }
 
     public void onStopped(int errCode) {
@@ -264,6 +277,9 @@ public class AdbServerActivity extends AppCompatActivity implements AdbServerLis
             }
             sendMessage(clientId,"NumberOfFiles:"+file.length+",FileNames:"+fileNames);
 //            sendMessage(clientId,"FileName:"+file[file.length-1].getAbsolutePath()+",SizeInBytes:"+file[file.length-1].length());
+            return;
+        } else if(message.compareTo(Close_Server_App_Request) == 0) {
+            finish();
             return;
         }
         mTextViewString += "\nClient " + clientId + " : " + message;

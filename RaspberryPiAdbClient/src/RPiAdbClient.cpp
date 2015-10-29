@@ -69,6 +69,9 @@ void RPiAdbClient::run(){
 	case MODE_CAMERA_CAPTURE:
 		runCamera();
 		break;
+	case MODE_CLOSE_SERVER_APP:
+		closeServerApp();
+		break;
 	default:
 		cout << "Invalid Mode set : "<< mMode <<endl;
 		break;
@@ -77,6 +80,10 @@ void RPiAdbClient::run(){
 
 void RPiAdbClient::setMode(int mode) {
 	mMode = (AppMode)mode;
+}
+
+int RPiAdbClient::getMode() {
+	return mMode;
 }
 
 void RPiAdbClient::runChat() {
@@ -100,7 +107,9 @@ void RPiAdbClient::runCamera() {
 	int lenOfRead = 0;
 	int numberofCaptures = NUMBER_OF_CAPTURES, numberOfFiles = 0;
 	string command = "", folderName = "";
-	mAlgorithm = new RPiAdbClientImageAlgorithm();
+	if(mAlgorithm == NULL) {
+		mAlgorithm = new RPiAdbClientImageAlgorithm();
+	}
 	writeBuf = "REQUEST_CAMERA_CAPTURE";
 	writeBuf.append(":");
 	stringstream sNumberOfCaptures;
@@ -129,7 +138,20 @@ void RPiAdbClient::runCamera() {
 	System_do(command);
 }
 
+void RPiAdbClient::closeServerApp() {
+	string writeBuf;
+	if(mAlgorithm != NULL) {
+		delete mAlgorithm;
+		mAlgorithm = NULL;
+	}
+	writeBuf = "CLOSE_SERVER_APP";
+	mSocket.socketWrite((char*)writeBuf.c_str(),writeBuf.length());
+	sleep(3);
+	mMode = MODE_NONE;
+}
+
 }//RPiAdbClientApp
+
 
 int main() {
 	RPiAdbClient client;
@@ -141,7 +163,19 @@ int main() {
 		cout << "Failed to connect to ADB!" << endl;
 		return 0;
 	}
-	if(client.clientConnect(ip,5556)) {
+
+	//Find Port
+	string command = "";
+	command.append(ADB).append("pull ").append("/sdcard/adbServer.config .");
+	System_do(command);
+
+	string* configParams = new string[7];
+	int len = 7;
+	RPiAdbClientUtils::loadConfigurationFromFile("adbServer.config",&configParams,len);
+
+	cout << "Connecting to port : " << configParams[1] << endl;
+
+	if(client.clientConnect(ip,atoi(configParams[1].c_str()))) {
 	cout << "Client Connected!" << endl;
 	} else {
 		cout << "Failed to connect to client!" << endl;
@@ -149,11 +183,11 @@ int main() {
 	}
 	do {
 		cout
-				<< "Enter Mode: \n1 : Chat\n2: Request Camera capture!\n*****************************\n0: Quit"
+				<< "Enter Mode: \n1 : Chat\n2: Request Camera capture!\n3: Close Server APP!\n*****************************\n0: Quit"
 				<< endl;
 		cin >> mode;
 		client.setMode(mode);
 		client.run();
-	} while (mode != 0);
+	} while (client.getMode() != 0);
 	return 0;
 }

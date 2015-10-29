@@ -12,3 +12,5 @@ RaspberryPiAdbClient/Debug/RaspberryPiAdbClient
 RaspberryPiAdbClient/command_log
 
 AdbServerApp/app/app-release.apk
+
+RaspberryPiAdbClient/adbServer.config

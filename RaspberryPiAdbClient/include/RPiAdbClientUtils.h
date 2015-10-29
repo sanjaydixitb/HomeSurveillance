@@ -11,13 +11,14 @@
 #define RPIADBCLIENTUTILS_H_
 
 namespace RPiAdbClientApp {
-namespace RPiAdbClientAlgorithm {
 
-static class RPiAdbClientUtils {
-	void loadConfigurationFromFile(const string fileName,const unordered_map<CONFIG_KEYS,string> &configMap);
+class RPiAdbClientUtils {
+
+public:
+	static void loadConfigurationFromFile(const string fileName, string** configMap, int &len );
+
 };
 
-} /* namespace RPiAdbClientAlgorithm */
-} /* namespace RPiAdbClientApp */
+}/*RPiAdbClientApp*/
 
 #endif /* RPIADBCLIENTUTILS_H_ */
