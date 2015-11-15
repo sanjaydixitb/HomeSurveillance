@@ -3,7 +3,14 @@ package com.bsdsolutions.sanjaydixit.adbserver;
 import android.content.Context;
 import android.util.Log;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -12,6 +19,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by sanjaydixit on 06/10/15.
@@ -194,6 +202,94 @@ public class AdbStaticServer {
             Log.e(TAG,"Exception while handling outstream : " + e.getMessage());
         }
 
+    }
+
+    public boolean sendFile(int clientId, String fileName) {
+        Socket socket = clientMap.get(clientId);
+        if(socket == null || socket.isClosed() || !socket.isConnected()) {
+                Log.e(TAG,"Invalid socket to sendFile!");
+                return false;
+            }
+
+            if(fileName == null || fileName.length() == 0) {
+                Log.e(TAG,"Invalid filename to sendFile!");
+                return false;
+            }
+
+            File file = new File(fileName);
+            if(!file.exists()) {
+                Log.e(TAG,"File " + fileName + " does not exist! Error in sendFile!");
+                return false;
+            }
+
+            try {
+                FileInputStream fis = new FileInputStream(file);
+                long fileSize = file.length();
+                long dataRead = 0;
+                byte[] buffer = new byte[1000];
+                int dr = 0,sleepCount = 0;
+                String ackRead = "";
+                BufferedReader in = null;
+                DataOutputStream out = null;
+                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                out = new DataOutputStream(socket.getOutputStream());
+
+                while(dataRead != fileSize) { // && !socket.isOutputShutdown() && !socket.isClosed()) {
+                    dr = fis.read(buffer);
+                    if(dr == -1) {
+                        Log.d(TAG,"End of File reached!");
+                        break;
+                    } else {
+                        dataRead += (long)dr;
+                    }
+                    if(dataRead < 100) {
+                        Log.d(TAG,"read data : " + buffer + " dataRead : " + dataRead);
+                    }
+                    Log.d(TAG, "Read [" + dataRead + "/" + fileSize + "]");
+
+                    out.write(buffer);
+                    out.flush();
+
+                    ackRead = in.readLine();
+                    sleepCount = 0;
+                    while(ackRead == null) {
+                        //Sleep for some time
+                        sleepCount++;
+                        try {
+                            Thread.sleep(0, 50);
+                        } catch (InterruptedException e) {
+                            Log.e(TAG,"Exception while sleeping : " + e.getMessage());
+                        }
+                        Log.d(TAG,"SleepCount : " + sleepCount);
+                        ackRead = in.readLine();
+                        if(sleepCount > 50) {
+                            break;
+                        }
+                    }
+
+                    if(ackRead == null) {
+                        break;
+                    } else if(ackRead.compareToIgnoreCase("OK") == 0) {
+                        continue;
+                    }
+
+                }
+
+                Log.d(TAG, "While Ended with dataRead : " + dataRead + " and fileSize = " + fileSize);
+
+                out.flush();
+
+            } catch (FileNotFoundException e) {
+                Log.e(TAG,"File not found exception for file " + file + " with message : "+ e.getMessage());
+                return false;
+            } catch (IOException e) {
+                Log.e(TAG,"IO exception for file " + file + " with message : "+ e.getMessage());
+                return false;
+            }
+
+        Log.d(TAG,"Returning !");
+
+            return true;
     }
 
     public class AcceptServerConnections implements Runnable {

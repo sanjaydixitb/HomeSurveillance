@@ -88,14 +88,14 @@ int RPiAdbClient::getMode() {
 
 void RPiAdbClient::runChat() {
 	string writeBuf, readBuf;
-	char dataRead[1024];
+	unsigned char dataRead[1024];
 	cin >> writeBuf;
 	while(writeBuf.compare("Q") != 0) {
 	//		getline(cin,writeBuf);
-		mSocket.socketWrite((char*)writeBuf.c_str(),writeBuf.length());
+		mSocket.socketWrite((unsigned char*)writeBuf.c_str(),writeBuf.length());
 		mSocket.socketRead(dataRead,1024);
 		readBuf = "";
-		readBuf.append(dataRead);
+		readBuf.append((char*)dataRead);
 		cout << "Read " << readBuf << endl;
 		cin >> writeBuf;
 	}
@@ -103,8 +103,8 @@ void RPiAdbClient::runChat() {
 
 void RPiAdbClient::runCamera() {
 	string writeBuf, readBuf;
-	char dataRead[1024];
-	int lenOfRead = 0;
+	unsigned char dataRead[1025];
+	long long lenOfRead = 0;
 	int numberofCaptures = NUMBER_OF_CAPTURES, numberOfFiles = 0;
 	string command = "", folderName = "";
 	if(mAlgorithm == NULL) {
@@ -115,13 +115,13 @@ void RPiAdbClient::runCamera() {
 	stringstream sNumberOfCaptures;
 	sNumberOfCaptures << numberofCaptures;
 	writeBuf.append(sNumberOfCaptures.str());
-	mSocket.socketWrite((char*)writeBuf.c_str(),writeBuf.length());
+	mSocket.socketWrite((unsigned char*)writeBuf.c_str(),writeBuf.length());
 	sleep(TIME_TO_WAIT_PER_CAPTURE*numberofCaptures);
 	writeBuf = "REQUEST_CAMERA_DATA";
-	mSocket.socketWrite((char*)writeBuf.c_str(),writeBuf.length());
+	mSocket.socketWrite((unsigned char*)writeBuf.c_str(),writeBuf.length());
 	lenOfRead = mSocket.socketRead(dataRead,1024);
 	readBuf = "";
-	readBuf.append(dataRead,lenOfRead);
+	readBuf.append((char*)dataRead,lenOfRead);
 	cout << "Read " << readBuf << endl;
 	folderName = readBuf.substr(11,readBuf.find("NumberOfFiles:") - 12);
 	cout << "folderName : "<<folderName << " and number of files = " << readBuf.substr(readBuf.find("NumberOfFiles:") + 14) <<endl;
@@ -131,11 +131,48 @@ void RPiAdbClient::runCamera() {
 	command = "";
 	command.append(ADB).append("pull ").append(folderName).append(" ").append(DESTINATION_FOLDER_PATH);
 	System_do(command);
+
+	//TEMP:
+	writeBuf = "REQUEST_CAMERA_DATA_FILE_NAMES";
+	mSocket.socketWrite((unsigned char*)writeBuf.c_str(),writeBuf.length());
+	lenOfRead = mSocket.socketRead(dataRead,1024);
+	readBuf = "";
+	readBuf.append((char*)dataRead,lenOfRead);
+	cout << "Read " << readBuf << endl;
+	string fileNamesList = readBuf.substr(readBuf.find(",FileNames:") + 11);
+	string file = fileNamesList.substr(0,fileNamesList.find(':'));
+
+	while(file.find("/") != string::npos) {
+		file = file.substr(file.find("/") + 1);
+	}
+
+	file.insert(0,"out_");
+
+	cout << " Writing to file : " << file << endl;
+
+	FILE* pFile;
+	pFile = fopen(file.c_str(),"w+");
+	writeBuf = "OK";
+
+	lenOfRead = mSocket.socketRead(dataRead,1024);
+	while(lenOfRead > 0) {
+		fwrite (dataRead , sizeof(unsigned char), lenOfRead, pFile);
+		mSocket.socketWrite((unsigned char*)writeBuf.c_str(), writeBuf.length());
+		lenOfRead = mSocket.socketRead(dataRead,1024);
+	}
+
+	cout << " Done writing to file!" << endl;
+
+	fclose(pFile);
+
 	//Remove file after pulling it. Save space!
 	//TODO: Remove only if image copied
-	command = "";
-	command.append(ADB).append("shell rm ").append(folderName).append("/*");
-	System_do(command);
+//	command = "";
+//	command.append(ADB).append("shell rm ").append(folderName).append("/*");
+//	System_do(command);
+
+
+
 }
 
 void RPiAdbClient::closeServerApp() {
@@ -145,7 +182,7 @@ void RPiAdbClient::closeServerApp() {
 		mAlgorithm = NULL;
 	}
 	writeBuf = "CLOSE_SERVER_APP";
-	mSocket.socketWrite((char*)writeBuf.c_str(),writeBuf.length());
+	mSocket.socketWrite((unsigned char*)writeBuf.c_str(),writeBuf.length());
 	sleep(3);
 	mMode = MODE_NONE;
 }

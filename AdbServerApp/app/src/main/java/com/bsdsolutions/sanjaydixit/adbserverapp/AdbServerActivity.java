@@ -276,6 +276,7 @@ public class AdbServerActivity extends AppCompatActivity implements AdbServerLis
                 fileNames += file[i].getAbsolutePath();
             }
             sendMessage(clientId,"NumberOfFiles:"+file.length+",FileNames:"+fileNames);
+            sendFile(clientId,fileNames.substring(0,fileNames.indexOf(':')));
 //            sendMessage(clientId,"FileName:"+file[file.length-1].getAbsolutePath()+",SizeInBytes:"+file[file.length-1].length());
             return;
         } else if(message.compareTo(Close_Server_App_Request) == 0) {
@@ -289,6 +290,10 @@ public class AdbServerActivity extends AppCompatActivity implements AdbServerLis
 
     public void sendMessage(int clientId, String message) {
         mServer.sendMessage(clientId, message);
+    }
+
+    public boolean sendFile(int clientId, String fileName) {
+        return mServer.sendFile(clientId,fileName);
     }
 
 }

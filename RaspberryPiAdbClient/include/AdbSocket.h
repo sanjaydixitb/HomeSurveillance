@@ -23,8 +23,8 @@ public:
 	AdbSocket(char* ip, int port);
 	bool socketConnect(char* ip, int port);
 	virtual ~AdbSocket();
-	int socketWrite(char* buff, int size);
-	int socketRead(char* buff, int size);
+	int socketWrite(unsigned char* buff, int size);
+	int socketRead(unsigned char* buff, int size);
 	bool isConnected();
 private:
 	int mSocket,mPort;

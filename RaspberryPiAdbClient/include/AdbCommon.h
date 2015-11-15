@@ -23,16 +23,17 @@ typedef enum {
 using namespace std;
 
 #define BUF_SIZE 1024
-#define ADB "/Users/sanjaydixit/Library/Android/sdk/platform-tools/adb "
 #define System_do(x) system(x.insert(0,"echo ").c_str()); system(x.substr(5).c_str());
 #define System_do_with_log(x) system(x.insert(0,"echo ").c_str()); system(x.insert(x.length()," > command_log").substr(5).c_str());
 #if __APPLE__ && __MACH__
 #define DESTINATION_FOLDER_PATH "./Images/"
+#define ADB "/Users/sanjaydixit/Library/Android/sdk/platform-tools/adb "
 #else
 #define DESTINATION_FOLDER_PATH "./Images/"
+#define ADB "~/Desktop/ADB/mypart/adb "
 #endif
 
-#define NUMBER_OF_CAPTURES 2
+#define NUMBER_OF_CAPTURES 1
 #define TIME_TO_WAIT_PER_CAPTURE 3
 
 //data types
