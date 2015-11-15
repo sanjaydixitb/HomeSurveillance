@@ -153,12 +153,13 @@ void RPiAdbClient::runCamera() {
 	FILE* pFile;
 	pFile = fopen(file.c_str(),"w+");
 	writeBuf = "OK";
-
-	lenOfRead = mSocket.socketRead(dataRead,1024);
+	unsigned char* ack = (unsigned char*)writeBuf.c_str();
+	int ackLen = writeBuf.length();
+	lenOfRead = mSocket.socketRead(dataRead,1024,ack, ackLen);
 	while(lenOfRead > 0) {
 		fwrite (dataRead , sizeof(unsigned char), lenOfRead, pFile);
-		mSocket.socketWrite((unsigned char*)writeBuf.c_str(), writeBuf.length());
-		lenOfRead = mSocket.socketRead(dataRead,1024);
+//		mSocket.socketWrite((unsigned char*)writeBuf.c_str(), writeBuf.length());
+		lenOfRead = mSocket.socketRead(dataRead,1024,ack, ackLen);
 	}
 
 	cout << " Done writing to file!" << endl;

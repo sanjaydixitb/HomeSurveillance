@@ -96,7 +96,7 @@ int AdbSocket::socketWrite(unsigned char* buff, int size) {
 	return retVal;
 }
 
-int AdbSocket::socketRead(unsigned char* buff, int size) {
+int AdbSocket::socketRead(unsigned char* buff, int size, unsigned char* ack, int ackSize) {
 	int retVal = 0;
 	bzero(mReadBuffer, BUF_SIZE);
 	retVal = read(mSocket, mReadBuffer, BUF_SIZE);
@@ -107,6 +107,8 @@ int AdbSocket::socketRead(unsigned char* buff, int size) {
 			cout << "Size not enough!" << endl;
 			return -1;
 		}
+		if(ack && ackSize)
+			socketWrite(ack,ackSize);
 		memcpy(buff, mReadBuffer, retVal);
 		buff[retVal] = '\0';
 	}

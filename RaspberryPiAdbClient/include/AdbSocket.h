@@ -24,7 +24,7 @@ public:
 	bool socketConnect(char* ip, int port);
 	virtual ~AdbSocket();
 	int socketWrite(unsigned char* buff, int size);
-	int socketRead(unsigned char* buff, int size);
+	int socketRead(unsigned char* buff, int size, unsigned char* ack = NULL, int ackSize = 0);
 	bool isConnected();
 private:
 	int mSocket,mPort;

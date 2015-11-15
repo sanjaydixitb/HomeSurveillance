@@ -1,6 +1,8 @@
 #TODO:
-Write Server port to config file and read information from that file to connect to server at specific port, obtain camera server data storage location, etc.
-Transfer a list of file names from server and cross check at client.
+Handle single file in CameraServerData folder
+End of File Message
+Improve efficiency of file transfer
+Transfer list of Files and sizes, use it to end file transfer protocol.
 Process images to check if storing them is required.
 Cleanup RaspberryPiAdbClient code:
 	- New thread for run
