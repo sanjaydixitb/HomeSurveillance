@@ -89,21 +89,23 @@ int RPiAdbClient::getMode() {
 void RPiAdbClient::runChat() {
 	string writeBuf, readBuf;
 	unsigned char dataRead[1024];
-	cin >> writeBuf;
+	//Dummy get Line to get last line!
+	getline(cin,writeBuf);
+
+	getline(cin,writeBuf);
 	while(writeBuf.compare("Q") != 0) {
-	//		getline(cin,writeBuf);
 		mSocket.socketWrite((unsigned char*)writeBuf.c_str(),writeBuf.length());
 		mSocket.socketRead(dataRead,1024);
 		readBuf = "";
 		readBuf.append((char*)dataRead);
 		cout << "Read " << readBuf << endl;
-		cin >> writeBuf;
+		getline(cin,writeBuf);
 	}
 }
 
 void RPiAdbClient::runCamera() {
 	string writeBuf, readBuf;
-	unsigned char dataRead[1025];
+	unsigned char dataRead[8025];
 	long long lenOfRead = 0;
 	int numberofCaptures = NUMBER_OF_CAPTURES;
 	string command = "", fullFileName = "";
@@ -165,12 +167,12 @@ void RPiAdbClient::runCamera() {
 	writeBuf = "OK";
 	unsigned char* ack = (unsigned char*)writeBuf.c_str();
 	int ackLen = writeBuf.length();
-	lenOfRead = mSocket.socketRead(dataRead,1024,ack, ackLen);
+	lenOfRead = mSocket.socketRead(dataRead,8004,ack, ackLen);
 	readDone += lenOfRead;
 	while(lenOfRead > 0 && readDone != fileSize) {
 		fwrite (dataRead , sizeof(unsigned char), lenOfRead, pFile);
 //		mSocket.socketWrite((unsigned char*)writeBuf.c_str(), writeBuf.length());
-		lenOfRead = mSocket.socketRead(dataRead,1024,ack, ackLen);
+		lenOfRead = mSocket.socketRead(dataRead,8004,ack, ackLen);
 		readDone += lenOfRead;
 //		cout << "Read [" << readDone <<"/" << fileSize << "] " << endl;
 	}

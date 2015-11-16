@@ -1,6 +1,6 @@
 #TODO:
 Improve efficiency of file transfer:
-	- Faster writes
+	- Faster writes (load file in mem)
 	- Faster reads
 Process images to check if storing them is required.
 Cleanup RaspberryPiAdbClient code:

@@ -60,6 +60,7 @@ public class AdbStaticServer {
     private volatile ServerState mState = ServerState.ServerState_Stopped;
     //TODO: Remove
     private HashMap<Integer,Socket> clientMap = new HashMap<>();
+    private int clientSendingFile = -1;
     private int connectionCounter = 0;
 
     public void registerListener(AdbServerListener listener) {
@@ -205,20 +206,30 @@ public class AdbStaticServer {
     }
 
     public boolean sendFile(int clientId, String fileName) {
+        if(clientSendingFile != -1) {
+            Log.e(TAG, "Already sending file! Busy!");
+            return false;
+        } else {
+            clientSendingFile = clientId;
+            Log.d(TAG,"Client " + clientSendingFile + " is sending a file!");
+        }
         Socket socket = clientMap.get(clientId);
         if(socket == null || socket.isClosed() || !socket.isConnected()) {
                 Log.e(TAG,"Invalid socket to sendFile!");
+                clientSendingFile = -1;
                 return false;
             }
 
             if(fileName == null || fileName.length() == 0) {
                 Log.e(TAG,"Invalid filename to sendFile!");
+                clientSendingFile = -1;
                 return false;
             }
 
             File file = new File(fileName);
             if(!file.exists()) {
                 Log.e(TAG,"File " + fileName + " does not exist! Error in sendFile!");
+                clientSendingFile = -1;
                 return false;
             }
 
@@ -226,11 +237,12 @@ public class AdbStaticServer {
                 FileInputStream fis = new FileInputStream(file);
                 long fileSize = file.length();
                 long dataRead = 0;
-                byte[] buffer = new byte[1000];
+                byte[] buffer = new byte[8000];
                 int dr = 0,sleepCount = 0;
                 String ackRead = "";
                 BufferedReader in = null;
                 DataOutputStream out = null;
+                socket.setSendBufferSize(8004);
                 in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 out = new DataOutputStream(socket.getOutputStream());
 
@@ -284,11 +296,15 @@ public class AdbStaticServer {
 
             } catch (FileNotFoundException e) {
                 Log.e(TAG,"File not found exception for file " + file + " with message : "+ e.getMessage());
+                clientSendingFile = -1;
                 return false;
             } catch (IOException e) {
                 Log.e(TAG,"IO exception for file " + file + " with message : "+ e.getMessage());
+                clientSendingFile = -1;
                 return false;
             }
+
+            clientSendingFile = -1;
             return true;
     }
 
@@ -352,10 +368,8 @@ public class AdbStaticServer {
                 return;
             }
             BufferedReader inp = null;
-            PrintWriter out = null;
             try {
                 inp = new BufferedReader(new InputStreamReader(mSocket.getInputStream()));
-                out = new PrintWriter(mSocket.getOutputStream(), true);
             } catch (IOException e) {
                 Log.e(TAG,"Exception while getting input stream!");
                 return;
@@ -365,16 +379,20 @@ public class AdbStaticServer {
 
             do {
                 try {
+                    while(clientSendingFile == mClientId) {
+                        Thread.sleep(50,0);
+                    }
                     buffer = inp.readLine();
                     Log.d(TAG, "Read Line : " + buffer);
                     if(buffer != null) {
                         mListener.onDataReceived(mClientId, buffer.getBytes());
-//                        out.write(buffer);
-//                        out.flush();
                     }
                 } catch (IOException e) {
                     buffer = null;
                     Log.e(TAG,"Exception while reading line : " + e.getMessage());
+                } catch (InterruptedException e) {
+                    buffer = null;
+                    Log.e(TAG,"Exception while sleeping : " + e.getMessage());
                 }
             } while(buffer != null && !mSocket.isInputShutdown());
 
