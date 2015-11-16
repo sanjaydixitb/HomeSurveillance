@@ -24,6 +24,7 @@ import com.bsdsolutions.sanjaydixit.adbserver.AdbStaticServer;
 import com.bsdsolutions.sanjaydixit.adbserverapp.AdbServerAppUtils.CONFIGURATION_PARAMETERS;
 
 import java.io.File;
+import java.io.FileReader;
 import java.util.HashMap;
 
 public class AdbServerActivity extends AppCompatActivity implements AdbServerListener {
@@ -32,8 +33,8 @@ public class AdbServerActivity extends AppCompatActivity implements AdbServerLis
     public static final String EXTRA_NUMBER_OF_CAPTURES = "extra_number_of_captures";
     public static final String CAMERA_SERVER_DATA_PATH = Environment.getExternalStorageDirectory().toString() + File.separator + "CameraServerData";
     private static final String Capture_Request = "REQUEST_CAMERA_CAPTURE";
-    private static final String Data_Request = "REQUEST_CAMERA_DATA";
-    private static final String File_Names_Request = "REQUEST_CAMERA_DATA_FILE_NAMES";
+    private static final String Camera_File_Names_Request = "REQUEST_CAMERA_DATA_FILE_NAMES";
+    private static final String File_Request = "REQUEST_DATA_FILE";
     private static final String Close_Server_App_Request = "CLOSE_SERVER_APP";
     private static int PORT = 5556;
     private boolean mStartServerAfterStop = false;
@@ -244,23 +245,7 @@ public class AdbServerActivity extends AppCompatActivity implements AdbServerLis
                 }
             }
             startActivity(intent);
-        } else if(message.compareTo(Data_Request) == 0) {
-            //TODO: Probably redundant. Move to Utils.
-            //get List of files in folder(Environment.getExternalStorageDirectory() + File.separator + "CameraServerData" + File.separator + date)
-            String path = CAMERA_SERVER_DATA_PATH;
-            Log.d(TAG, "Path: " + path);
-            File f = new File(path);
-            File file[] = f.listFiles();
-            Log.d(TAG, "Size: " + file.length);
-            for (int i=0; i < file.length; i++)
-            {
-                Log.d(TAG, "FileName:" + file[i].getName());
-            }
-            sendMessage(clientId,"FolderName:"+path+",NumberOfFiles:"+file.length);
-//            sendMessage(clientId,"FileName:"+file[file.length-1].getAbsolutePath()+",SizeInBytes:"+file[file.length-1].length());
-            return;
-        } else if(message.compareTo(File_Names_Request) == 0) {
-            //TODO: Move to Utils.
+        } else if(message.compareTo(Camera_File_Names_Request) == 0) {
             //get List of files in folder(Environment.getExternalStorageDirectory() + File.separator + "CameraServerData" + File.separator + date)
             String path = CAMERA_SERVER_DATA_PATH;
             String fileNames = "";
@@ -276,8 +261,15 @@ public class AdbServerActivity extends AppCompatActivity implements AdbServerLis
                 fileNames += file[i].getAbsolutePath();
             }
             sendMessage(clientId,"NumberOfFiles:"+file.length+",FileNames:"+fileNames);
-            sendFile(clientId,fileNames.substring(0,fileNames.indexOf(':')));
 //            sendMessage(clientId,"FileName:"+file[file.length-1].getAbsolutePath()+",SizeInBytes:"+file[file.length-1].length());
+            return;
+        } else if(message.startsWith(File_Request)) {
+            //get List of files in folder(Environment.getExternalStorageDirectory() + File.separator + "CameraServerData" + File.separator + date)
+            String path = CAMERA_SERVER_DATA_PATH + File.separator +message.substring(message.indexOf(File_Request) + File_Request.length() + 1);
+            Log.d(TAG,"Requested file : " + path);
+            File f = new File(path);
+            sendMessage(clientId,"LENGTH:"+f.length());
+            sendFile(clientId, path);
             return;
         } else if(message.compareTo(Close_Server_App_Request) == 0) {
             finish();

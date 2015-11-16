@@ -105,8 +105,8 @@ void RPiAdbClient::runCamera() {
 	string writeBuf, readBuf;
 	unsigned char dataRead[1025];
 	long long lenOfRead = 0;
-	int numberofCaptures = NUMBER_OF_CAPTURES, numberOfFiles = 0;
-	string command = "", folderName = "";
+	int numberofCaptures = NUMBER_OF_CAPTURES;
+	string command = "", fullFileName = "";
 	if(mAlgorithm == NULL) {
 		mAlgorithm = new RPiAdbClientImageAlgorithm();
 	}
@@ -117,20 +117,20 @@ void RPiAdbClient::runCamera() {
 	writeBuf.append(sNumberOfCaptures.str());
 	mSocket.socketWrite((unsigned char*)writeBuf.c_str(),writeBuf.length());
 	sleep(TIME_TO_WAIT_PER_CAPTURE*numberofCaptures);
-	writeBuf = "REQUEST_CAMERA_DATA";
-	mSocket.socketWrite((unsigned char*)writeBuf.c_str(),writeBuf.length());
-	lenOfRead = mSocket.socketRead(dataRead,1024);
-	readBuf = "";
-	readBuf.append((char*)dataRead,lenOfRead);
-	cout << "Read " << readBuf << endl;
-	folderName = readBuf.substr(11,readBuf.find("NumberOfFiles:") - 12);
-	cout << "folderName : "<<folderName << " and number of files = " << readBuf.substr(readBuf.find("NumberOfFiles:") + 14) <<endl;
-	numberOfFiles = stoi(readBuf.substr(readBuf.find("NumberOfFiles:") + 14));
-	cout << "folderName : "<<folderName << " and number of files = " << numberOfFiles <<endl;
-	//TODO: Pull entire folder and save in local folder. Clear remote folder
-	command = "";
-	command.append(ADB).append("pull ").append(folderName).append(" ").append(DESTINATION_FOLDER_PATH);
-	System_do(command);
+//	writeBuf = "REQUEST_CAMERA_DATA";
+//	mSocket.socketWrite((unsigned char*)writeBuf.c_str(),writeBuf.length());
+//	lenOfRead = mSocket.socketRead(dataRead,1024);
+//	readBuf = "";
+//	readBuf.append((char*)dataRead,lenOfRead);
+//	cout << "Read " << readBuf << endl;
+//	fullFileName = readBuf.substr(11,readBuf.find("NumberOfFiles:") - 12);
+//	cout << "fullFileName : "<<fullFileName << " and number of files = " << readBuf.substr(readBuf.find("NumberOfFiles:") + 14) <<endl;
+//	numberOfFiles = stoi(readBuf.substr(readBuf.find("NumberOfFiles:") + 14));
+//	cout << "fullFileName : "<<fullFileName << " and number of files = " << numberOfFiles <<endl;
+//	//TODO: Pull entire folder and save in local folder. Clear remote folder
+//	command = "";
+//	command.append(ADB).append("pull ").append(fullFileName).append(" ").append(DESTINATION_FOLDER_PATH);
+//	System_do(command);
 
 	//TEMP:
 	writeBuf = "REQUEST_CAMERA_DATA_FILE_NAMES";
@@ -140,38 +140,60 @@ void RPiAdbClient::runCamera() {
 	readBuf.append((char*)dataRead,lenOfRead);
 	cout << "Read " << readBuf << endl;
 	string fileNamesList = readBuf.substr(readBuf.find(",FileNames:") + 11);
-	string file = fileNamesList.substr(0,fileNamesList.find(':'));
 
+	while(fileNamesList.length() > 0) {
+	string file = fileNamesList.substr(0,fileNamesList.find(':'));
+	fullFileName = file;
 	while(file.find("/") != string::npos) {
 		file = file.substr(file.find("/") + 1);
 	}
-
+	writeBuf = "REQUEST_DATA_FILE:" + file;
+	mSocket.socketWrite((unsigned char*)writeBuf.c_str(),writeBuf.length());
+	lenOfRead = mSocket.socketRead(dataRead,1024);
+	readBuf = "";
+	readBuf.append((char*)dataRead,lenOfRead);
 	file.insert(0,"out_");
 
-	cout << " Writing to file : " << file << endl;
+	readBuf = readBuf.substr(readBuf.find("LENGTH:") + 7);
 
+	cout << " Writing to file : " << file << " of size : " << readBuf << endl;
+	time_t startTime,endTime;
+	time(&startTime);
+	int fileSize = atoi(readBuf.c_str()), readDone = 0;
 	FILE* pFile;
 	pFile = fopen(file.c_str(),"w+");
 	writeBuf = "OK";
 	unsigned char* ack = (unsigned char*)writeBuf.c_str();
 	int ackLen = writeBuf.length();
 	lenOfRead = mSocket.socketRead(dataRead,1024,ack, ackLen);
-	while(lenOfRead > 0) {
+	readDone += lenOfRead;
+	while(lenOfRead > 0 && readDone != fileSize) {
 		fwrite (dataRead , sizeof(unsigned char), lenOfRead, pFile);
 //		mSocket.socketWrite((unsigned char*)writeBuf.c_str(), writeBuf.length());
 		lenOfRead = mSocket.socketRead(dataRead,1024,ack, ackLen);
+		readDone += lenOfRead;
+//		cout << "Read [" << readDone <<"/" << fileSize << "] " << endl;
 	}
-
-	cout << " Done writing to file!" << endl;
+	if(lenOfRead > 0)
+		fwrite (dataRead , sizeof(unsigned char), lenOfRead, pFile);
+	time(&endTime);
+	double diffTime = difftime(endTime,startTime);
+	cout << " Done writing to file in " << diffTime <<" seconds." << endl;
 
 	fclose(pFile);
 
-	//Remove file after pulling it. Save space!
-	//TODO: Remove only if image copied
-//	command = "";
-//	command.append(ADB).append("shell rm ").append(folderName).append("/*");
-//	System_do(command);
+	//	Remove file after pulling it. Save space!
+	//	TODO: Remove only if image copied
+	command = "";
+	command.append(ADB).append("shell rm ").append(fullFileName);
+	System_do(command);
 
+	if(fileNamesList.find(':') != string::npos)
+		fileNamesList = fileNamesList.substr(fileNamesList.find(':') + 1);
+	else
+		break;
+
+	}
 
 
 }

@@ -242,12 +242,15 @@ public class AdbStaticServer {
                     } else {
                         dataRead += (long)dr;
                     }
-                    if(dataRead < 100) {
-                        Log.d(TAG,"read data : " + buffer + " dataRead : " + dataRead);
-                    }
-                    Log.d(TAG, "Read [" + dataRead + "/" + fileSize + "]");
+//                    if(dataRead < 100) {
+//                        Log.d(TAG,"read data : " + buffer + " dataRead : " + dataRead);
+//                    }
+//                    Log.d(TAG, "Read [" + dataRead + "/" + fileSize + "]");
 
-                    out.write(buffer);
+                    if(dr == buffer.length)
+                        out.write(buffer);
+                    else
+                        out.write(buffer,0,dr);
                     out.flush();
 
                     ackRead = in.readLine();
@@ -286,9 +289,6 @@ public class AdbStaticServer {
                 Log.e(TAG,"IO exception for file " + file + " with message : "+ e.getMessage());
                 return false;
             }
-
-        Log.d(TAG,"Returning !");
-
             return true;
     }
 

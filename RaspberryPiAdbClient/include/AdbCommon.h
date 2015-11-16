@@ -13,6 +13,7 @@
 #include <string>
 #include <sstream>
 #include <unordered_map>
+#include <time.h>
 
 typedef enum {
 	CAMERA_SERVER_DATA_PATH = 0,
@@ -33,7 +34,7 @@ using namespace std;
 #define ADB "~/Desktop/ADB/mypart/adb "
 #endif
 
-#define NUMBER_OF_CAPTURES 1
+#define NUMBER_OF_CAPTURES 2
 #define TIME_TO_WAIT_PER_CAPTURE 3
 
 //data types

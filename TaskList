@@ -1,8 +1,7 @@
 #TODO:
-Handle single file in CameraServerData folder
-End of File Message
-Improve efficiency of file transfer
-Transfer list of Files and sizes, use it to end file transfer protocol.
+Improve efficiency of file transfer:
+	- Faster writes
+	- Faster reads
 Process images to check if storing them is required.
 Cleanup RaspberryPiAdbClient code:
 	- New thread for run
