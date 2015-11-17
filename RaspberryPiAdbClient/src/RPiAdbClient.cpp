@@ -108,6 +108,10 @@ void RPiAdbClient::runCamera() {
 	unsigned char dataRead[8025];
 	long long lenOfRead = 0;
 	int numberofCaptures = NUMBER_OF_CAPTURES;
+	cout << "Enter number of captures : " << endl;
+	cin >> numberofCaptures;
+	if(!numberofCaptures)
+		numberofCaptures = NUMBER_OF_CAPTURES;
 	string command = "", fullFileName = "";
 	if(mAlgorithm == NULL) {
 		mAlgorithm = new RPiAdbClientImageAlgorithm();
@@ -164,7 +168,7 @@ void RPiAdbClient::runCamera() {
 	int fileSize = atoi(readBuf.c_str()), readDone = 0;
 	FILE* pFile;
 	pFile = fopen(file.c_str(),"w+");
-	writeBuf = "OK";
+	writeBuf = "ACK_RECEIVING_DATA_CHUNK_FROM_FILE";
 	unsigned char* ack = (unsigned char*)writeBuf.c_str();
 	int ackLen = writeBuf.length();
 	lenOfRead = mSocket.socketRead(dataRead,8004,ack, ackLen);

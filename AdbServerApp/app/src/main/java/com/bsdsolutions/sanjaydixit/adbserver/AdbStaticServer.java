@@ -3,14 +3,11 @@ package com.bsdsolutions.sanjaydixit.adbserver;
 import android.content.Context;
 import android.util.Log;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -19,7 +16,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Created by sanjaydixit on 06/10/15.
@@ -62,6 +58,7 @@ public class AdbStaticServer {
     private HashMap<Integer,Socket> clientMap = new HashMap<>();
     private int clientSendingFile = -1;
     private int connectionCounter = 0;
+    private static final String FILE_CHUNK_RECV_ACK = "ACK_RECEIVING_DATA_CHUNK_FROM_FILE";
 
     public void registerListener(AdbServerListener listener) {
         if(listener == null) {
@@ -284,8 +281,11 @@ public class AdbStaticServer {
 
                     if(ackRead == null) {
                         break;
-                    } else if(ackRead.compareToIgnoreCase("OK") == 0) {
+                    } else if(ackRead.compareToIgnoreCase(FILE_CHUNK_RECV_ACK) == 0) {
                         continue;
+                    } else {
+                        Log.e(TAG,"Invalid ack read : "+ackRead + "!");
+                        break;
                     }
 
                 }
@@ -376,23 +376,24 @@ public class AdbStaticServer {
             }
 
             String buffer;
+            int count= 0;
 
             do {
                 try {
-                    while(clientSendingFile == mClientId) {
-                        Thread.sleep(50,0);
-                    }
                     buffer = inp.readLine();
-                    Log.d(TAG, "Read Line : " + buffer);
-                    if(buffer != null) {
+                    if(buffer.compareTo(FILE_CHUNK_RECV_ACK) == 0) {
+                        count++;
+                        Log.d(TAG, "Read Line : " + buffer + " count : " + count);
+                    } else {
+                        count = 0;
+                        Log.d(TAG, "Read Line : " + buffer);
+                    }
+                    if(buffer != null && (buffer.compareTo(FILE_CHUNK_RECV_ACK) != 0)) {
                         mListener.onDataReceived(mClientId, buffer.getBytes());
                     }
                 } catch (IOException e) {
                     buffer = null;
                     Log.e(TAG,"Exception while reading line : " + e.getMessage());
-                } catch (InterruptedException e) {
-                    buffer = null;
-                    Log.e(TAG,"Exception while sleeping : " + e.getMessage());
                 }
             } while(buffer != null && !mSocket.isInputShutdown());
 

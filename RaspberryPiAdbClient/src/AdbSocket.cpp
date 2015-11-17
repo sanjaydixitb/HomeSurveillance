@@ -104,7 +104,7 @@ int AdbSocket::socketRead(unsigned char* buff, int size, unsigned char* ack, int
 		cout << "ERROR reading from socket" << endl;
 	} else {
 		if(size < retVal + 1) {
-			cout << "Size not enough!" << endl;
+			cout << "Size not enough! size [" << size << "] sizeOfDataRead [" << retVal << "]" << endl;
 			return -1;
 		}
 		if(ack && ackSize)

@@ -1,4 +1,5 @@
 #TODO:
+Synchronise InputStream and OutputStream, use same objects if required!
 Improve efficiency of file transfer:
 	- Faster writes (load file in mem)
 	- Faster reads

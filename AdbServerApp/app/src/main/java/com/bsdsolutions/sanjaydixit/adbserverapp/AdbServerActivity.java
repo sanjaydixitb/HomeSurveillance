@@ -24,7 +24,6 @@ import com.bsdsolutions.sanjaydixit.adbserver.AdbStaticServer;
 import com.bsdsolutions.sanjaydixit.adbserverapp.AdbServerAppUtils.CONFIGURATION_PARAMETERS;
 
 import java.io.File;
-import java.io.FileReader;
 import java.util.HashMap;
 
 public class AdbServerActivity extends AppCompatActivity implements AdbServerListener {
@@ -223,11 +222,17 @@ public class AdbServerActivity extends AppCompatActivity implements AdbServerLis
 
     public void onNewConnectionEstablished(int clientId) {
         mClientId = clientId;
+        mTextViewString += "\n<Client " + clientId + " connected>";
+        Message msg = mHandler.obtainMessage(UPDATE_TEXTVIEW);
+        msg.sendToTarget();
     }
 
     public void onConnectionLost(int clientId) {
         if(clientId == mClientId) {
             mClientId = -1;
+            mTextViewString += "\n<Client " + clientId + " disconnected>";
+            Message msg = mHandler.obtainMessage(UPDATE_TEXTVIEW);
+            msg.sendToTarget();
         }
     }
 

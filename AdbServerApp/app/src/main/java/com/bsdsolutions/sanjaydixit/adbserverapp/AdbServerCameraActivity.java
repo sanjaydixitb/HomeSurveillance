@@ -6,6 +6,8 @@ import android.hardware.Camera;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -16,9 +18,7 @@ import android.hardware.Camera.ShutterCallback;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.text.DateFormat;
 
 
 /**
@@ -33,6 +33,9 @@ public class AdbServerCameraActivity extends Activity implements SurfaceHolder.C
     private Camera myCamera = null;
     private static final int DEFAULT_NUMBER_OF_CONSECUTIVE_CAPTURES = 1;
     private static int NUMBER_OF_CONSECUTIVE_CAPTURES = DEFAULT_NUMBER_OF_CONSECUTIVE_CAPTURES;
+    private static final int CAPTURE_IMAGE = 1000;
+
+    private Handler mHandler = null;
 
     private int captureCount = 0;
 
@@ -55,14 +58,22 @@ public class AdbServerCameraActivity extends Activity implements SurfaceHolder.C
 
         initializeCamera();
 
+        mHandler = new Handler(new Handler.Callback() {
+            @Override
+            public boolean handleMessage(Message msg) {
+                switch (msg.what) {
+                    case CAPTURE_IMAGE:
+                        captureImage();
+                        return true;
+                }
+                return false;
+            }
+        });
+
         start_camera();
-        try {
-            Thread.sleep(500,0); //Removing this results in dark images. Fix!
-        }
-        catch (InterruptedException e ) {
-            Log.e(TAG,"Exception : " + e.getMessage());
-        }
-        captureImage();
+
+        Message msg = mHandler.obtainMessage(CAPTURE_IMAGE);
+        mHandler.sendMessageDelayed(msg, 500);
 
     }
 
@@ -126,7 +137,8 @@ public class AdbServerCameraActivity extends Activity implements SurfaceHolder.C
                 Log.d(TAG, "onPictureTaken - jpeg");
                 captureCount++;
                 if(captureCount < NUMBER_OF_CONSECUTIVE_CAPTURES) {
-                    captureImage();
+                    Message msg = mHandler.obtainMessage(CAPTURE_IMAGE);
+                    mHandler.sendMessage(msg);
                 } else {
                     finish();
                 }
